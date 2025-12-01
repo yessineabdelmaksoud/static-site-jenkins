@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Code déjà récupéré depuis Git par Jenkins (SCM).'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo 'Aucune étape de build nécessaire pour un site statique.'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo 'Tests symboliques : vérifier que index.html existe.'
+                // Sur Linux : on pourra mettre par ex:
+                // sh 'test -f index.html'
+            }
+        }
+
+        stage('Package') {
+            steps {
+                echo 'Préparation du "package" (les fichiers statiques).'
+                // On ajoutera la copie vers un dossier dist/deploy dans une prochaine étape
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline terminé avec succès.'
+        }
+        failure {
+            echo 'Le pipeline a échoué.'
+        }
+    }
+}
