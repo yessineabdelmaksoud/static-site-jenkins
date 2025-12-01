@@ -16,16 +16,43 @@ pipeline {
 
         stage('Test') {
             steps {
-                echo 'Tests symboliques : vérifier que index.html existe.'
-                // Sur Linux : on pourra mettre par ex:
-                // sh 'test -f index.html'
+                echo 'Vérification que les fichiers statiques existent...'
+                bat '''
+                if not exist index.html (
+                    echo ERREUR : index.html est manquant !
+                    exit /b 1
+                )
+                if not exist style.css (
+                    echo ERREUR : style.css est manquant !
+                    exit /b 1
+                )
+                echo OK : index.html et style.css sont présents.
+                '''
             }
         }
 
         stage('Package') {
             steps {
-                echo 'Préparation du "package" (les fichiers statiques).'
-                // On ajoutera la copie vers un dossier dist/deploy dans une prochaine étape
+                echo 'Préparation du dossier deploy/...'
+                bat '''
+                if exist deploy rmdir /S /Q deploy
+                mkdir deploy
+                xcopy index.html deploy /Y
+                xcopy style.css deploy /Y
+                '''
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Déploiement vers le dossier local...'
+                bat '''
+                if not exist C:\\jenkins-deploy\\static-site (
+                    mkdir C:\\jenkins-deploy\\static-site
+                )
+                xcopy deploy\\* C:\\jenkins-deploy\\static-site /E /I /Y
+                echo Site déployé dans C:\\jenkins-deploy\\static-site
+                '''
             }
         }
     }
@@ -33,6 +60,7 @@ pipeline {
     post {
         success {
             echo 'Pipeline terminé avec succès.'
+            archiveArtifacts artifacts: 'deploy/**', fingerprint: true
         }
         failure {
             echo 'Le pipeline a échoué.'
